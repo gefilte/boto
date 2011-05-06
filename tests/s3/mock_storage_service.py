@@ -125,13 +125,17 @@ class MockBucket(object):
         self.name = name
         self.keys = {}
         self.acls = {name: MockAcl()}
-        self.connection = connection
+        self._connection = connection
+    
+    @property
+    def connection(self):
+        return self._connection or mock_connection
 
     def copy_key(self, new_key_name, src_bucket_name,
                  src_key_name, metadata=NOT_IMPL, src_version_id=NOT_IMPL,
                  storage_class=NOT_IMPL, preserve_acl=NOT_IMPL):
         new_key = self.new_key(key_name=new_key_name)
-        src_key = mock_connection.get_bucket(
+        src_key = self.connection.get_bucket(
             src_bucket_name).get_key(src_key_name)
         new_key.data = copy.copy(src_key.data)
         new_key.size = len(new_key.data)
@@ -229,7 +233,7 @@ class MockConnection(object):
         return self.buckets.itervalues()
 
 
-# We only mock a single provider/connection.
+# We mock a single provider/connection for cases when you don't constuct your own.
 mock_connection = MockConnection()
 
 
